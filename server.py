@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 
-app = Flask(_name_)  # 2 underscores here
+app = Flask(__name__)
 CORS(app)
 
 # ===== READ FROM RENDER ENVIRONMENT VARIABLES =====
