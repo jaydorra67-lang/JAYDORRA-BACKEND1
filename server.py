@@ -1,62 +1,58 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import os
 
-app = Flask(_name_)
+app = Flask(_name_)  # 2 underscores here
 CORS(app)
 
-# ===== READ FROM RENDER ENV VARIABLES =====
+# ===== READ FROM RENDER ENVIRONMENT VARIABLES =====
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL")
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
+EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD") 
 RECEIVER_EMAIL = "jaydorra67@gmail.com"
-# ==========================================
+# ===================================================
 
 @app.route("/")
 def home():
     return "Jaydorra Backend is running ✅"
 
-@app.route("/send-message", methods=["POST"])
-def send_message():
-    data = request.get_json()
-    name = data.get("name")
-    email = data.get("email")
-    subject = data.get("subject")
-    message = data.get("message")
-
-    if not all([name, email, subject, message]):
-        return jsonify({"error": "All fields are required"}), 400
-
-    msg = MIMEMultipart()
-    msg["From"] = SENDER_EMAIL
-    msg["To"] = RECEIVER_EMAIL
-    msg["Subject"] = f"New Contact: {subject}"
-
-    body = f"""
-    You have a new message from Jaydorra Contact Form:
-    
-    Name: {name}
-    Email: {email}
-    Subject: {subject}
-    
-    Message:
-    {message}
-    """
-    msg.attach(MIMEText(body, "plain"))
-
+@app.route("/send-email", methods=["POST"])
+def send_email():
     try:
+        data = request.get_json()
+        
+        name = data.get("name")
+        email = data.get("email")
+        message = data.get("message")
+        
+        msg = MIMEMultipart()
+        msg["From"] = SENDER_EMAIL
+        msg["To"] = RECEIVER_EMAIL
+        msg["Subject"] = f"New Contact from {name} - Jaydorra Website"
+        
+        body = f"""
+        You have a new message from your website:
+        
+        Name: {name}
+        Email: {email}
+        Message: {message}
+        """
+        
+        msg.attach(MIMEText(body, "plain"))
+        
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
         server.login(SENDER_EMAIL, EMAIL_PASSWORD)
-        server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg.as_string())
+        server.send_message(msg)
         server.quit()
-        return jsonify({"success": "Message sent successfully!"}), 200
-    
+        
+        return jsonify({"status": "success", "message": "Email sent!"})
+        
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"status": "error", "message": str(e)})
 
 if _name_ == "_main_":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run()
